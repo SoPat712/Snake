@@ -2,8 +2,6 @@ import pygame
 import random
 import time
 
-from pygame import surface
-
 SIZE = 40
 
 black = pygame.Color(0, 0, 0)
@@ -11,6 +9,7 @@ white = pygame.Color(255, 255, 255)
 red = pygame.Color(255, 0, 0)
 green = pygame.Color(0, 255, 0)
 blue = pygame.Color(0, 0, 255)
+
 
 class Apple:
     def __init__(self, surface):
@@ -20,7 +19,8 @@ class Apple:
         self.surface = surface
 
     def draw(self):
-        pygame.draw.circle(self.surface, (255, 255, 255), (self.x+SIZE/2, self.y+SIZE/2), SIZE/2)
+        pygame.draw.circle(self.surface, (255, 255, 255),
+                           (self.x+SIZE/2, self.y+SIZE/2), SIZE/2)
         pygame.display.update()
 
     def move(self):
@@ -45,7 +45,8 @@ class Snake:
     def draw(self):
         self.surface.fill((255, 0, 0))
         for i in range(self.length):
-            pygame.draw.rect(self.surface, green, pygame.Rect(self.x[i], self.y[i], SIZE, SIZE))
+            pygame.draw.rect(self.surface, green, pygame.Rect(
+                self.x[i], self.y[i], SIZE, SIZE))
         pygame.display.update()
 
     def moveLeft(self):
@@ -127,7 +128,8 @@ class Game:
 
     def play(self):
         if self.is_collision(self.snake.x[0], self.snake.y[0], self.apple.x, self.apple.y, self.snake.direction):
-            print("Snake: (" + str(self.snake.x[0]) + "," + str(self.snake.y[0])+")")
+            print(
+                "Snake: (" + str(self.snake.x[0]) + "," + str(self.snake.y[0])+")")
             print("Apple: (" + str(self.apple.x) + "," + str(self.apple.y)+")")
             self.snake.increase_length()
             self.apple.move()
@@ -136,7 +138,6 @@ class Game:
         self.snake.walk()
         self.apple.draw()
         pygame.display.flip()
-        
 
     def display_score(self):
         font = pygame.font.SysFont('arial', 15)
