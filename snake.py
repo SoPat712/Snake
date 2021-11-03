@@ -1,5 +1,8 @@
+from os import error
 import pygame
 import random
+from pygame.constants import K_KP_ENTER
+import pygame.freetype
 import time
 
 SIZE = 40
@@ -30,12 +33,15 @@ class Apple:
 
 class Snake:
     def __init__(self, surface, length):
+
         self.surface = surface
         self.block = pygame.image.load("resources/block.jpg").convert()
         self.x = [SIZE]*length
         self.y = [SIZE]*length
         self.direction = 'right'
         self.length = length
+        self.takingInput = True
+        self.score = 0
 
     def increase_length(self):
         self.length += 1
@@ -45,21 +51,33 @@ class Snake:
     def draw(self):
         self.surface.fill((255, 0, 0))
         for i in range(self.length):
-            pygame.draw.rect(self.surface, green, pygame.Rect(
-                self.x[i], self.y[i], SIZE, SIZE))
+            if(i == 0):
+                pygame.draw.rect(self.surface, black, pygame.Rect(
+                    self.x[i], self.y[i], SIZE, SIZE))
+            else:
+                pygame.draw.rect(self.surface, green, pygame.Rect(
+                    self.x[i], self.y[i], SIZE, SIZE))
         pygame.display.update()
 
     def moveLeft(self):
-        self.direction = 'left'
+        if self.direction != 'right':
+            self.takingInput = False
+            self.direction = 'left'
 
     def moveRight(self):
-        self.direction = 'right'
+        if self.direction != 'left':
+            self.takingInput = False
+            self.direction = 'right'
 
     def moveUp(self):
-        self.direction = 'up'
+        if self.direction != 'down':
+            self.takingInput = False
+            self.direction = 'up'
 
     def moveDown(self):
-        self.direction = 'down'
+        if self.direction != 'up':
+            self.takingInput = False
+            self.direction = 'down'
 
     def walk(self):
 
@@ -75,6 +93,7 @@ class Snake:
             self.y[0] -= SIZE
         elif(self.direction == 'down'):
             self.y[0] += SIZE
+        self.takingInput = True
         self.draw()
 
 
@@ -105,16 +124,38 @@ class Game:
 
         return False
 
+    def show_game_over(self):
+        self.surface.fill((0, 0, 0))
+        GAME_FONT = pygame.freetype.Font("roboto-regular.ttf", 24)
+        text_surface, rect = GAME_FONT.render("Game Over  | Score: "+str((self.snake.length*10)-30), (255, 255, 255))
+        self.surface.blit(text_surface, (350, 350))
+        text_surface2, rect2 = GAME_FONT.render("To play again, hit enter", (255, 255, 255))
+        self.surface.blit(text_surface2, (350, 400))
+        pygame.display.update()
+
     def run(self):
         running = True
-
+        pause = False
         while running:
             for event in pygame.event.get():
+                print(self.snake.takingInput)
                 if event.type == pygame.QUIT:
                     running = False
-                elif event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN and self.snake.takingInput:
                     if event.key == pygame.K_ESCAPE:
                         running = False
+                    if event.key == pygame.K_RETURN:
+                        print("Enter")
+                        self.snake = Snake(self.surface, 3)
+                        self.snake.draw()
+                        self.apple = Apple(self.surface)
+                        self.apple.draw()
+                        self.snake.score = 0
+                        self.snake.length = 3
+                        self.snake.draw()
+                        self.apple.move()
+                        self.display_score()
+                        pygame.display.update()
                     if event.key == pygame.K_LEFT:
                         self.snake.moveLeft()
                     if event.key == pygame.K_RIGHT:
@@ -123,8 +164,13 @@ class Game:
                         self.snake.moveUp()
                     if event.key == pygame.K_DOWN:
                         self.snake.moveDown()
-            self.play()
-            time.sleep(0.2)
+            try:
+                if not pause:
+                    self.play()
+            except Exception as e:
+                self.show_game_over()
+                
+            time.sleep(.075)
 
     def play(self):
         if self.is_collision(self.snake.x[0], self.snake.y[0], self.apple.x, self.apple.y, self.snake.direction):
@@ -133,16 +179,26 @@ class Game:
             print("Apple: (" + str(self.apple.x) + "," + str(self.apple.y)+")")
             self.snake.increase_length()
             self.apple.move()
-            print("done")
+            self.snake.score += 10
+        for i in range(3, self.snake.length):
+            if self.is_collision(self.snake.x[0], self.snake.y[0], self.snake.x[i], self.snake.y[i], self.snake.direction):
+                print("Collision")
+                self.takingInput = True
+                raise "Game Over"
 
         self.snake.walk()
         self.apple.draw()
+        # try:
+        self.display_score()
+        # except error:
+        #    print(error)
         pygame.display.flip()
 
     def display_score(self):
-        font = pygame.font.SysFont('arial', 15)
-        score = font.render("Score: ", True, (255, 200, 200))
-        self.surface.blit(score, (850, 10))
+        GAME_FONT = pygame.freetype.Font("roboto-regular.ttf", 24)
+        text_surface, rect = GAME_FONT.render("Score: "+ str(self.snake.score), (0, 0, 0))
+        self.surface.blit(text_surface, (900, 10))
+
 
 
 if __name__ == "__main__":
